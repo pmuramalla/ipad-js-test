@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>JavaScript Engine Sleep Test with Graphical Representation</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #log {
+            white-space: pre-wrap;
+            background-color: #f0f0f0;
+            padding: 10px;
+            height: 200px;
+            overflow-y: scroll;
+            border: 1px solid #ccc;
+        }
+        .hidden {
+            color: red;
+        }
+        .visible {
+            color: green;
+        }
+        #controls {
+            margin-bottom: 10px;
+        }
+        #controls button {
+            padding: 5px 10px;
+            font-size: 14px;
+            margin-right: 5px;
+        }
+        #status {
+            margin-top: 10px;
+        }
+        #chart-container {
+            width: 100%;
+            height: 300px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>JavaScript Engine Sleep Test</h1>
+<p>This page tests how the JavaScript engine behaves when the browser goes into the background and monitors various events.</p>
+
+<div id="controls">
+    <button id="startBtn">Start</button>
+    <button id="stopBtn" disabled>Stop</button>
+    <button id="clearBtn">Clear</button>
+</div>
+
+<div id="status">Page is currently <span id="visibilityStatus" class="visible">visible</span>.</div>
+<div id="log"></div>
+
+<div id="chart-container">
+    <canvas id="chart"></canvas>
+</div>
+
+<script>
+    (function() {
+        var logElement = document.getElementById('log');
+        var visibilityStatus = document.getElementById('visibilityStatus');
+        var lastExecutionTime = performance.now();
+        var interval = 1000; // 1 second
+        var ticking = false;
+        var timeoutId = null;
+        var chartData = [];
+        var chart = null;
+
+        function log(message) {
+            var time = new Date().toLocaleTimeString();
+            logElement.textContent += `[${time}] ${message}\n`;
+
+            // Auto-scroll if not scrolled up
+            if (logElement.scrollHeight - logElement.clientHeight - logElement.scrollTop <= 10) {
+                logElement.scrollTop = logElement.scrollHeight;
+            }
+        }
+
+        function tick() {
+            if (!ticking) return;
+
+            var currentTime = performance.now();
+            var elapsed = currentTime - lastExecutionTime;
+            lastExecutionTime = currentTime;
+
+            log(`Tick executed after ${elapsed.toFixed(2)} ms (Expected: ${interval} ms)`);
+
+            // Add data point to the chart
+            chartData.push({x: currentTime, y: elapsed});
+            updateChart();
+
+            // Schedule the next tick
+            timeoutId = setTimeout(tick, interval);
+        }
+
+        function startTicking() {
+            if (ticking) return;
+            ticking = true;
+            lastExecutionTime = performance.now();
+            tick();
+            log('Ticking started.');
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+        }
+
+        function stopTicking() {
+            if (!ticking) return;
+            ticking = false;
+            clearTimeout(timeoutId);
+            log('Ticking stopped.');
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+        }
+
+        function clearLog() {
+            logElement.textContent = '';
+            chartData = [];
+            updateChart();
+            log('Log cleared.');
+        }
+
+        function createChart() {
+            var ctx = document.getElementById('chart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'Elapsed Time (ms)',
+                        data: chartData,
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Time'
+                            }
+                        },
+                        y: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Elapsed Time (ms)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChart() {
+            if (chart) {
+                chart.data.datasets[0].data = chartData;
+                chart.update();
+            }
+        }
+
+        // Event listeners
+
+        // Page Visibility API
+        function handleVisibilityChange() {
+            if (document.hidden) {
+                visibilityStatus.textContent = 'hidden';
+                visibilityStatus.className = 'hidden';
+                log('Page became hidden.');
+            } else {
+                visibilityStatus.textContent = 'visible';
+                visibilityStatus.className = 'visible';
+                log('Page became visible.');
+            }
+        }
+
+        document.addEventListener('visibilitychange', handleVisibilityChange, false);
+
+        // Event listeners for buttons
+        document.getElementById('startBtn').addEventListener('click', startTicking);
+        document.getElementById('stopBtn').addEventListener('click', stopTicking);
+        document.getElementById('clearBtn').addEventListener('click', clearLog);
+
+        // Create the initial chart
+        createChart();
+
+        // Initial log
+        log('JavaScript engine sleep test initialized. Click "Start" to begin.');
+    })();
+</script>
+
+</body>
+</html>

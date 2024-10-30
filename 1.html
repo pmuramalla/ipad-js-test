@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>JavaScript Background Test</title>
+</head>
+<body>
+  <h1>JavaScript Background Test</h1>
+  <p>Switch to a different app or tab, then come back to this page.</p>
+  <p>Check the console for the elapsed time.</p>
+
+  <script>
+    let startTime;
+
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'hidden') {
+        startTime = Date.now();
+      } else if (document.visibilityState === 'visible') {
+        const elapsedTime = Date.now() - startTime;
+        console.log('Elapsed time: ' + elapsedTime + 'ms');
+      }
+    });
+  </script>
+</body>
+</html>

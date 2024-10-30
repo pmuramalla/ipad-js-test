@@ -16,6 +16,12 @@
       margin-bottom: 5px;
     }
     
+    button {
+      margin-top: 10px;
+      padding: 5px 10px;
+      font-size: 16px;
+    }
+    
     #results {
       margin-top: 20px;
       font-family: monospace;
@@ -28,6 +34,8 @@
   <p>Switch to a different app or tab, then come back to this page.</p>
   <p>The results will be displayed below:</p>
   
+  <button id="toggleButton">Start Test</button>
+  
   <div id="results"></div>
 
   <script>
@@ -35,9 +43,11 @@
     let elapsedTime;
     let expectedTime;
     let counter = 0;
+    let intervalId;
     
     const resultsDiv = document.getElementById('results');
-
+    const toggleButton = document.getElementById('toggleButton');
+    
     function testBackgroundExecution() {
       if (!startTime) {
         startTime = Date.now();
@@ -46,15 +56,30 @@
       counter++;
       expectedTime = counter * 100;
 
-      setTimeout(function() {
-        elapsedTime = Date.now() - startTime;
-        const result = `Elapsed time: ${elapsedTime}ms, Expected time: ${expectedTime}ms`;
-        resultsDiv.insertAdjacentHTML('afterbegin', result + '<br>');
-        testBackgroundExecution();
-      }, 100);
+      elapsedTime = Date.now() - startTime;
+      const result = `Elapsed time: ${elapsedTime}ms, Expected time: ${expectedTime}ms`;
+      resultsDiv.insertAdjacentHTML('afterbegin', result + '<br>');
     }
-
-    testBackgroundExecution();
+    
+    function startTest() {
+      intervalId = setInterval(testBackgroundExecution, 100);
+      toggleButton.textContent = 'Stop Test';
+    }
+    
+    function stopTest() {
+      clearInterval(intervalId);
+      toggleButton.textContent = 'Start Test';
+    }
+    
+    function toggleTest() {
+      if (intervalId) {
+        stopTest();
+      } else {
+        startTest();
+      }
+    }
+    
+    toggleButton.addEventListener('click', toggleTest);
   </script>
 </body>
 </html>

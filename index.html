@@ -1,133 +1,140 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>JavaScript Engine Sleep Test with Controls</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
+(function() {
+    var logElement = document.getElementById('log');
+    var visibilityStatus = document.getElementById('visibilityStatus');
+    var lastExecutionTime = performance.now();
+    var interval = 1000; // 1 second
+    var ticking = false;
+    var timeoutId = null;
+
+    function log(message) {
+        var time = new Date().toLocaleTimeString();
+        logElement.textContent += `[${time}] ${message}\n`;
+
+        // Auto-scroll if not scrolled up
+        if (logElement.scrollHeight - logElement.clientHeight - logElement.scrollTop <= 10) {
+            logElement.scrollTop = logElement.scrollHeight;
         }
-        #log {
-            white-space: pre-wrap;
-            background-color: #f0f0f0;
-            padding: 10px;
-            height: 300px;
-            overflow-y: scroll;
-            border: 1px solid #ccc;
+    }
+
+    function tick() {
+        if (!ticking) return;
+
+        var currentTime = performance.now();
+        var elapsed = currentTime - lastExecutionTime;
+        lastExecutionTime = currentTime;
+
+        log(`Tick executed after ${elapsed.toFixed(2)} ms (Expected: ${interval} ms)`);
+
+        // Schedule the next tick
+        timeoutId = setTimeout(tick, interval);
+    }
+
+    function startTicking() {
+        if (ticking) return;
+        ticking = true;
+        lastExecutionTime = performance.now();
+        tick();
+        log('Ticking started.');
+        document.getElementById('startBtn').disabled = true;
+        document.getElementById('stopBtn').disabled = false;
+    }
+
+    function stopTicking() {
+        if (!ticking) return;
+        ticking = false;
+        clearTimeout(timeoutId);
+        log('Ticking stopped.');
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('stopBtn').disabled = true;
+    }
+
+    function clearLog() {
+        logElement.textContent = '';
+        log('Log cleared.');
+    }
+
+    // Event listeners
+
+    // Page Visibility API
+    function handleVisibilityChange() {
+        if (document.hidden) {
+            visibilityStatus.textContent = 'hidden';
+            visibilityStatus.className = 'hidden';
+            log('Page became hidden.');
+        } else {
+            visibilityStatus.textContent = 'visible';
+            visibilityStatus.className = 'visible';
+            log('Page became visible.');
         }
-        .hidden {
-            color: red;
-        }
-        .visible {
-            color: green;
-        }
-        #controls {
-            margin-bottom: 10px;
-        }
-        #controls button {
-            padding: 5px 10px;
-            font-size: 14px;
-            margin-right: 5px;
-        }
-        #status {
-            margin-top: 10px;
-        }
-    </style>
-</head>
-<body>
+    }
 
-<h1>JavaScript Engine Sleep Test</h1>
-<p>This page tests how the JavaScript engine behaves when the browser goes into the background.</p>
+    document.addEventListener('visibilitychange', handleVisibilityChange, false);
 
-<div id="controls">
-    <button id="startBtn">Start</button>
-    <button id="stopBtn" disabled>Stop</button>
-    <button id="clearBtn">Clear</button>
-</div>
+    // Freeze and Resume Events (Page Lifecycle API)
+    document.addEventListener('freeze', function() {
+        log('Page is freezing.');
+    });
 
-<div id="status">Page is currently <span id="visibilityStatus" class="visible">visible</span>.</div>
-<div id="log"></div>
+    document.addEventListener('resume', function() {
+        log('Page has resumed.');
+    });
 
-<script>
-    (function() {
-        var logElement = document.getElementById('log');
-        var visibilityStatus = document.getElementById('visibilityStatus');
-        var lastExecutionTime = performance.now();
-        var interval = 1000; // 1 second
-        var ticking = false;
-        var timeoutId = null;
+    // Pagehide and Pageshow Events
+    window.addEventListener('pagehide', function(event) {
+        log('Page is being hidden. Persisted: ' + event.persisted);
+    });
 
-        function log(message) {
-            var time = new Date().toLocaleTimeString();
-            logElement.textContent += `[${time}] ${message}\n`;
+    window.addEventListener('pageshow', function(event) {
+        log('Page is being shown. Persisted: ' + event.persisted);
+    });
 
-            // Auto-scroll if not scrolled up
-            if (logElement.scrollHeight - logElement.clientHeight - logElement.scrollTop <= 10) {
-                logElement.scrollTop = logElement.scrollHeight;
-            }
-        }
+    // Window Blur and Focus Events
+    window.addEventListener('blur', function() {
+        log('Window lost focus.');
+    });
 
-        function tick() {
-            if (!ticking) return;
+    window.addEventListener('focus', function() {
+        log('Window gained focus.');
+    });
 
-            var currentTime = performance.now();
-            var elapsed = currentTime - lastExecutionTime;
-            lastExecutionTime = currentTime;
+    // Network Online and Offline Events
+    window.addEventListener('online', function() {
+        log('Network connection restored.');
+    });
 
-            log(`Tick executed after ${elapsed.toFixed(2)} ms`);
+    window.addEventListener('offline', function() {
+        log('Network connection lost.');
+    });
 
-            // Schedule the next tick
-            timeoutId = setTimeout(tick, interval);
-        }
+    // Battery Status API (if supported)
+    if (navigator.getBattery) {
+        navigator.getBattery().then(function(battery) {
+            log(`Battery level: ${battery.level * 100}%`);
+            battery.addEventListener('levelchange', function() {
+                log(`Battery level changed: ${battery.level * 100}%`);
+            });
+        });
+    } else {
+        log('Battery Status API not supported.');
+    }
 
-        function startTicking() {
-            if (ticking) return;
-            ticking = true;
-            lastExecutionTime = performance.now();
-            tick();
-            log('Ticking started.');
-            document.getElementById('startBtn').disabled = true;
-            document.getElementById('stopBtn').disabled = false;
-        }
+    // requestAnimationFrame Monitoring
+    var lastAnimationFrameTime = performance.now();
+    function animate() {
+        var currentTime = performance.now();
+        var elapsed = currentTime - lastAnimationFrameTime;
+        lastAnimationFrameTime = currentTime;
 
-        function stopTicking() {
-            if (!ticking) return;
-            ticking = false;
-            clearTimeout(timeoutId);
-            log('Ticking stopped.');
-            document.getElementById('startBtn').disabled = false;
-            document.getElementById('stopBtn').disabled = true;
-        }
+        log(`Animation frame after ${elapsed.toFixed(2)} ms`);
+        requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
 
-        function clearLog() {
-            logElement.textContent = '';
-            log('Log cleared.');
-        }
+    // Event listeners for buttons
+    document.getElementById('startBtn').addEventListener('click', startTicking);
+    document.getElementById('stopBtn').addEventListener('click', stopTicking);
+    document.getElementById('clearBtn').addEventListener('click', clearLog);
 
-        // Page Visibility API handler
-        function handleVisibilityChange() {
-            if (document.hidden) {
-                visibilityStatus.textContent = 'hidden';
-                visibilityStatus.className = 'hidden';
-                log('Page became hidden.');
-            } else {
-                visibilityStatus.textContent = 'visible';
-                visibilityStatus.className = 'visible';
-                log('Page became visible.');
-            }
-        }
-
-        // Add event listeners
-        document.addEventListener('visibilitychange', handleVisibilityChange, false);
-        document.getElementById('startBtn').addEventListener('click', startTicking);
-        document.getElementById('stopBtn').addEventListener('click', stopTicking);
-        document.getElementById('clearBtn').addEventListener('click', clearLog);
-
-        // Initial log
-        log('JavaScript engine sleep test initialized. Click "Start" to begin.');
-    })();
-</script>
-
-</body>
-</html>
+    // Initial log
+    log('JavaScript engine sleep test initialized. Click "Start" to begin.');
+})();

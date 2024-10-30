@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>JavaScript Sleep Test</title>
+    <title>JavaScript Engine Sleep Test with Controls</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -22,12 +22,27 @@
         .visible {
             color: green;
         }
+        #controls {
+            margin-bottom: 10px;
+        }
+        #startBtn, #stopBtn {
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+        #status {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
 
 <h1>JavaScript Engine Sleep Test</h1>
 <p>This page tests how the JavaScript engine behaves when the browser goes into the background.</p>
+
+<div id="controls">
+    <button id="startBtn">Start</button>
+    <button id="stopBtn" disabled>Stop</button>
+</div>
 
 <div id="status">Page is currently <span id="visibilityStatus" class="visible">visible</span>.</div>
 <div id="log"></div>
@@ -38,14 +53,22 @@
         var visibilityStatus = document.getElementById('visibilityStatus');
         var lastExecutionTime = performance.now();
         var interval = 1000; // 1 second
+        var ticking = false;
+        var timeoutId = null;
 
         function log(message) {
             var time = new Date().toLocaleTimeString();
             logElement.textContent += `[${time}] ${message}\n`;
-            logElement.scrollTop = logElement.scrollHeight; // Auto-scroll
+
+            // Auto-scroll if not scrolled up
+            if (logElement.scrollHeight - logElement.clientHeight - logElement.scrollTop <= 10) {
+                logElement.scrollTop = logElement.scrollHeight;
+            }
         }
 
         function tick() {
+            if (!ticking) return;
+
             var currentTime = performance.now();
             var elapsed = currentTime - lastExecutionTime;
             lastExecutionTime = currentTime;
@@ -53,11 +76,27 @@
             log(`Tick executed after ${elapsed.toFixed(2)} ms`);
 
             // Schedule the next tick
-            setTimeout(tick, interval);
+            timeoutId = setTimeout(tick, interval);
         }
 
-        // Start the ticking
-        setTimeout(tick, interval);
+        function startTicking() {
+            if (ticking) return;
+            ticking = true;
+            lastExecutionTime = performance.now();
+            tick();
+            log('Ticking started.');
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+        }
+
+        function stopTicking() {
+            if (!ticking) return;
+            ticking = false;
+            clearTimeout(timeoutId);
+            log('Ticking stopped.');
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+        }
 
         // Page Visibility API handler
         function handleVisibilityChange() {
@@ -72,11 +111,13 @@
             }
         }
 
-        // Add event listener for visibility change
+        // Add event listeners
         document.addEventListener('visibilitychange', handleVisibilityChange, false);
+        document.getElementById('startBtn').addEventListener('click', startTicking);
+        document.getElementById('stopBtn').addEventListener('click', stopTicking);
 
         // Initial log
-        log('JavaScript engine sleep test started.');
+        log('JavaScript engine sleep test initialized. Click "Start" to begin.');
     })();
 </script>
 

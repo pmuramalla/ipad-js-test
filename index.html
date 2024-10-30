@@ -1,85 +1,84 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>JavaScript Background Test</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-    
-    h1 {
-      margin-bottom: 10px;
-    }
-    
-    p {
-      margin-bottom: 5px;
-    }
-    
-    button {
-      margin-top: 10px;
-      padding: 5px 10px;
-      font-size: 16px;
-    }
-    
-    #results {
-      margin-top: 20px;
-      font-family: monospace;
-      white-space: pre-wrap;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>JavaScript Sleep Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #log {
+            white-space: pre-wrap;
+            background-color: #f0f0f0;
+            padding: 10px;
+            height: 300px;
+            overflow-y: scroll;
+            border: 1px solid #ccc;
+        }
+        .hidden {
+            color: red;
+        }
+        .visible {
+            color: green;
+        }
+    </style>
 </head>
 <body>
-  <h1>JavaScript Background Test</h1>
-  <p>Switch to a different app or tab, then come back to this page.</p>
-  <p>The results will be displayed below:</p>
-  
-  <button id="toggleButton">Start Test</button>
-  
-  <div id="results"></div>
 
-  <script>
-    let startTime;
-    let elapsedTime;
-    let expectedTime;
-    let counter = 0;
-    let intervalId;
-    
-    const resultsDiv = document.getElementById('results');
-    const toggleButton = document.getElementById('toggleButton');
-    
-    function testBackgroundExecution() {
-      if (!startTime) {
-        startTime = Date.now();
-      }
+<h1>JavaScript Engine Sleep Test</h1>
+<p>This page tests how the JavaScript engine behaves when the browser goes into the background.</p>
 
-      counter++;
-      expectedTime = counter * 100;
+<div id="status">Page is currently <span id="visibilityStatus" class="visible">visible</span>.</div>
+<div id="log"></div>
 
-      elapsedTime = Date.now() - startTime;
-      const result = `Elapsed time: ${elapsedTime}ms, Expected time: ${expectedTime}ms`;
-      resultsDiv.insertAdjacentHTML('afterbegin', result + '<br>');
-    }
-    
-    function startTest() {
-      intervalId = setInterval(testBackgroundExecution, 100);
-      toggleButton.textContent = 'Stop Test';
-    }
-    
-    function stopTest() {
-      clearInterval(intervalId);
-      toggleButton.textContent = 'Start Test';
-    }
-    
-    function toggleTest() {
-      if (intervalId) {
-        stopTest();
-      } else {
-        startTest();
-      }
-    }
-    
-    toggleButton.addEventListener('click', toggleTest);
-  </script>
+<script>
+    (function() {
+        var logElement = document.getElementById('log');
+        var visibilityStatus = document.getElementById('visibilityStatus');
+        var lastExecutionTime = performance.now();
+        var interval = 1000; // 1 second
+
+        function log(message) {
+            var time = new Date().toLocaleTimeString();
+            logElement.textContent += `[${time}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight; // Auto-scroll
+        }
+
+        function tick() {
+            var currentTime = performance.now();
+            var elapsed = currentTime - lastExecutionTime;
+            lastExecutionTime = currentTime;
+
+            log(`Tick executed after ${elapsed.toFixed(2)} ms`);
+
+            // Schedule the next tick
+            setTimeout(tick, interval);
+        }
+
+        // Start the ticking
+        setTimeout(tick, interval);
+
+        // Page Visibility API handler
+        function handleVisibilityChange() {
+            if (document.hidden) {
+                visibilityStatus.textContent = 'hidden';
+                visibilityStatus.className = 'hidden';
+                log('Page became hidden.');
+            } else {
+                visibilityStatus.textContent = 'visible';
+                visibilityStatus.className = 'visible';
+                log('Page became visible.');
+            }
+        }
+
+        // Add event listener for visibility change
+        document.addEventListener('visibilitychange', handleVisibilityChange, false);
+
+        // Initial log
+        log('JavaScript engine sleep test started.');
+    })();
+</script>
+
 </body>
 </html>

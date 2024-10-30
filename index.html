@@ -122,15 +122,6 @@
 
         document.addEventListener('visibilitychange', handleVisibilityChange, false);
 
-        // Freeze and Resume Events (Page Lifecycle API)
-        document.addEventListener('freeze', function() {
-            log('Page is freezing.');
-        });
-
-        document.addEventListener('resume', function() {
-            log('Page has resumed.');
-        });
-
         // Pagehide and Pageshow Events
         window.addEventListener('pagehide', function(event) {
             log('Page is being hidden. Persisted: ' + event.persisted);
@@ -157,31 +148,6 @@
         window.addEventListener('offline', function() {
             log('Network connection lost.');
         });
-
-        
-        // Battery Status API (if supported)
-        if (navigator.getBattery) {
-            navigator.getBattery().then(function(battery) {
-                log(`Battery level: ${Math.round(battery.level * 100)}%`);
-                battery.addEventListener('levelchange', function() {
-                    log(`Battery level changed: ${Math.round(battery.level * 100)}%`);
-                });
-            });
-        } else {
-            log('Battery Status API not supported.');
-        }
-
-        // // requestAnimationFrame Monitoring
-        // var lastAnimationFrameTime = performance.now();
-        // function animate() {
-        //     var currentTime = performance.now();
-        //     var elapsed = currentTime - lastAnimationFrameTime;
-        //     lastAnimationFrameTime = currentTime;
-
-        //     log(`Animation frame after ${elapsed.toFixed(2)} ms`);
-        //     requestAnimationFrame(animate);
-        // }
-        // requestAnimationFrame(animate);
 
         // Event listeners for buttons
         document.getElementById('startBtn').addEventListener('click', startTicking);

@@ -183,6 +183,33 @@
 
         document.addEventListener('visibilitychange', handleVisibilityChange, false);
 
+        // Pagehide and Pageshow Events
+        window.addEventListener('pagehide', function(event) {
+            log('Page is being hidden. Persisted: ' + event.persisted);
+        });
+
+        window.addEventListener('pageshow', function(event) {
+            log('Page is being shown. Persisted: ' + event.persisted);
+        });
+
+        // Window Blur and Focus Events
+        window.addEventListener('blur', function() {
+            log('Window lost focus.');
+        });
+
+        window.addEventListener('focus', function() {
+            log('Window gained focus.');
+        });
+
+        // Network Online and Offline Events
+        window.addEventListener('online', function() {
+            log('Network connection restored.');
+        });
+
+        window.addEventListener('offline', function() {
+            log('Network connection lost.');
+        });
+
         // Event listeners for buttons
         document.getElementById('startBtn').addEventListener('click', startTicking);
         document.getElementById('stopBtn').addEventListener('click', stopTicking);

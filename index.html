@@ -158,11 +158,7 @@
             log('Network connection lost.');
         });
 
-        // Orientation Change Event
-        window.addEventListener('orientationchange', function() {
-            log('Device orientation changed.');
-        });
-
+        
         // Battery Status API (if supported)
         if (navigator.getBattery) {
             navigator.getBattery().then(function(battery) {
@@ -175,17 +171,17 @@
             log('Battery Status API not supported.');
         }
 
-        // requestAnimationFrame Monitoring
-        var lastAnimationFrameTime = performance.now();
-        function animate() {
-            var currentTime = performance.now();
-            var elapsed = currentTime - lastAnimationFrameTime;
-            lastAnimationFrameTime = currentTime;
+        // // requestAnimationFrame Monitoring
+        // var lastAnimationFrameTime = performance.now();
+        // function animate() {
+        //     var currentTime = performance.now();
+        //     var elapsed = currentTime - lastAnimationFrameTime;
+        //     lastAnimationFrameTime = currentTime;
 
-            log(`Animation frame after ${elapsed.toFixed(2)} ms`);
-            requestAnimationFrame(animate);
-        }
-        requestAnimationFrame(animate);
+        //     log(`Animation frame after ${elapsed.toFixed(2)} ms`);
+        //     requestAnimationFrame(animate);
+        // }
+        // requestAnimationFrame(animate);
 
         // Event listeners for buttons
         document.getElementById('startBtn').addEventListener('click', startTicking);

@@ -12,7 +12,7 @@
             white-space: pre-wrap;
             background-color: #f0f0f0;
             padding: 10px;
-            height: 300px;
+            height: 450px;
             overflow-y: scroll;
             border: 1px solid #ccc;
         }
@@ -32,6 +32,25 @@
         }
         #status {
             margin-top: 10px;
+        }
+        .log-message {
+            margin: 0;
+        }
+        .tick {
+            color: darkorange;
+        }
+        .long-tick {
+            color: red;
+            font-weight: bold;
+        }
+        .visibility {
+            color: purple;
+        }
+        .focus {
+            color: purple;
+        }
+        .network {
+            color: purple;
         }
     </style>
 </head>
@@ -57,13 +76,17 @@
         var interval = 1000; // 1 second
         var ticking = false;
         var timeoutId = null;
+        var userScrolled = false; // Track if the user has manually scrolled
 
-        function log(message) {
+        function log(message, type) {
             var time = new Date().toLocaleTimeString();
-            logElement.textContent += `[${time}] ${message}\n`;
+            var logEntry = document.createElement('div');
+            logEntry.className = 'log-message ' + (type || '');
+            logEntry.textContent = `[${time}] ${message}`;
+            logElement.appendChild(logEntry);
 
-            // Auto-scroll if not scrolled up
-            if (logElement.scrollHeight - logElement.clientHeight - logElement.scrollTop <= 10) {
+            // Auto-scroll only if the user has not scrolled manually
+            if (!userScrolled) {
                 logElement.scrollTop = logElement.scrollHeight;
             }
         }
@@ -75,7 +98,11 @@
             var elapsed = currentTime - lastExecutionTime;
             lastExecutionTime = currentTime;
 
-            log(`Tick executed after ${elapsed.toFixed(2)} ms (Expected: ${interval} ms)`);
+            if (elapsed > 5000) {
+                log(`Tick executed after ${elapsed.toFixed(2)} ms (Expected: ${interval} ms)`, 'long-tick');
+            } else {
+                log(`Tick executed after ${elapsed.toFixed(2)} ms (Expected: ${interval} ms)`, 'tick');
+            }
 
             // Schedule the next tick
             timeoutId = setTimeout(tick, interval);
@@ -86,7 +113,7 @@
             ticking = true;
             lastExecutionTime = performance.now();
             tick();
-            log('Ticking started.');
+            log('Ticking started.', 'tick');
             document.getElementById('startBtn').disabled = true;
             document.getElementById('stopBtn').disabled = false;
         }
@@ -95,15 +122,26 @@
             if (!ticking) return;
             ticking = false;
             clearTimeout(timeoutId);
-            log('Ticking stopped.');
+            log('Ticking stopped.', 'tick');
             document.getElementById('startBtn').disabled = false;
             document.getElementById('stopBtn').disabled = true;
         }
 
         function clearLog() {
             logElement.textContent = '';
-            log('Log cleared.');
+            log('Log cleared.', 'tick');
         }
+
+        // Scroll event listener to track user scroll activity
+        logElement.addEventListener('scroll', function() {
+            // If the user scrolls up, set userScrolled to true
+            if (logElement.scrollTop + logElement.clientHeight < logElement.scrollHeight) {
+                userScrolled = true;
+            } else {
+                // If scrolled back to bottom, reset userScrolled to false
+                userScrolled = false;
+            }
+        });
 
         // Event listeners
 
@@ -112,11 +150,11 @@
             if (document.hidden) {
                 visibilityStatus.textContent = 'hidden';
                 visibilityStatus.className = 'hidden';
-                log('Page became hidden.');
+                log('Page became hidden.', 'visibility');
             } else {
                 visibilityStatus.textContent = 'visible';
                 visibilityStatus.className = 'visible';
-                log('Page became visible.');
+                log('Page became visible.', 'visibility');
             }
         }
 
@@ -124,29 +162,29 @@
 
         // Pagehide and Pageshow Events
         window.addEventListener('pagehide', function(event) {
-            log('Page is being hidden. Persisted: ' + event.persisted);
+            log('Page is being hidden. Persisted: ' + event.persisted, 'visibility');
         });
 
         window.addEventListener('pageshow', function(event) {
-            log('Page is being shown. Persisted: ' + event.persisted);
+            log('Page is being shown. Persisted: ' + event.persisted, 'visibility');
         });
 
         // Window Blur and Focus Events
         window.addEventListener('blur', function() {
-            log('Window lost focus.');
+            log('Window lost focus.', 'focus');
         });
 
         window.addEventListener('focus', function() {
-            log('Window gained focus.');
+            log('Window gained focus.', 'focus');
         });
 
         // Network Online and Offline Events
         window.addEventListener('online', function() {
-            log('Network connection restored.');
+            log('Network connection restored.', 'network');
         });
 
         window.addEventListener('offline', function() {
-            log('Network connection lost.');
+            log('Network connection lost.', 'network');
         });
 
         // Event listeners for buttons
@@ -155,7 +193,7 @@
         document.getElementById('clearBtn').addEventListener('click', clearLog);
 
         // Initial log
-        log('JavaScript engine sleep test initialized. Click "Start" to begin.');
+        log('JavaScript engine sleep test initialized. Click "Start" to begin.', 'tick');
     })();
 </script>
 
